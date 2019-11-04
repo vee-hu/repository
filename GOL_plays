@@ -1,0 +1,89 @@
+cellSize = 8
+interval = 100
+probabilityOfAliveAtStart = 15
+
+def setup():
+    global grid_w, grid_h
+    global cells
+    global cellsBuffer
+    global cellsGen
+    size(960, 540)
+    
+    
+    grid_w, grid_h = int(width / cellSize), int(height / cellSize)
+    cells = [[None] * grid_w for _ in range(grid_h)]+[[None] * grid_h for _ in range(grid_w)]*width
+    cellsBuffer = [[None] * grid_w for _ in range(grid_h)]+[[None] * grid_h for _ in range(grid_w)]*width
+    cellsGen = [[None] * grid_w for _ in range(grid_h)]+[[None] * grid_h for _ in range(grid_w)]*width
+    
+    stroke(20)
+    noSmooth()
+    
+    for x in range(grid_w):
+      for y in range(grid_h):
+          state = random(100)
+          if state > probabilityOfAliveAtStart:
+              state = 0
+          else:
+              state = 1
+          cells[x][y] = state
+          cellsGen[x][y] = int(0)
+              
+    background(0,0,0)
+          
+          
+def draw():
+    fill(0,0,0)
+    rect(0,0,width,height)
+    
+    for x in range(grid_w):
+      for y in range(grid_h):
+         if cells[x][y]! == 0:
+             cellsGen[x][y] -=20
+             
+             
+    
+    for x in range(grid_w):
+      for y in range(grid_h):
+         tempGen = cellsGen[x][y]
+         
+         if cellsGen[x][y] > 0:    
+             if cells[x][y] == 1:
+               fill(color(tempGen, 0, 100, tempGen))
+             else:
+               fill(color(tempGen, 255-tempGen, 100, tempGen))
+             circleSize = map(tempGen, 0, 270, 0, cellSize)  
+             ellipse(x*cellSize, y*cellSize, circleSize, circleSize)
+         if tempGen > 150:
+             fill(color(tempGen+100, 100, 200, tempGen))
+             ellipse(x*cellSize, y*cellSize, circleSize*0.75, circleSize*0.75)
+             
+    if frameCount %1 == 0:
+        iteration() 
+        
+def iteration():  # When the clock ticks
+    # Save cells to buffer
+    # (so we opeate with one array keeping the other intact)
+    for x in range(grid_w):
+        for y in range(grid_h):
+            cellsBuffer[x][y] = cells[x][y]
+    # Visit each cell:
+    for x in range(grid_w):
+        for y in range(grid_h):
+            # And visit all the neighbours of each cell
+            neighbours = 0  # We'll count the neighbours
+            for xx in range(x - 1, x + 2):
+                for yy in range(y - 1, y + 2):
+                    # Make sure you are not out of bounds
+                    if 0 <= xx < grid_w and 0 <= yy < grid_h:
+                        # Make sure to check against self
+                        if not (xx == x and yy == y):
+                            if cellsBuffer[xx][yy] == 1:
+                                # Check alive neighbours and count them
+                                neighbours = neighbours + 1
+            if cellsBuffer[x][y] == 1:
+                if neighbours < 2 or neighbours > 3:
+                    cells[x][y] = 0  # Die unless it has 2 or 3 neighbours
+            else:  # The cell is dead: make it live if necessary
+                if neighbours == 3:# Only if it has 3 neighbours
+                    cells[x][y] = 1 
+                    cellsGen[x][y] = 270 
