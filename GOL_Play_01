@@ -1,0 +1,150 @@
+int cellSize = 4;
+
+//float probabilityOfAliveAtStart = 15.0;
+
+int interval = 100;
+int lastRecordedTime = 0;
+//color alive = color(random(255));
+//color dead = color(0);
+
+PImage source; 
+float r;
+float g;
+float b;
+//float randomColor01 = random(255);
+//float randomColor02 = random(255);
+//float randomColor03 = random(255);
+
+int[][]cells;
+int[][]cellsBuffer;
+int[][]cellsGen;
+int[][]cellsCol;
+boolean pause = false;
+public void settings() {
+  size(960, 540);
+  noSmooth();
+}
+
+void setup() {
+
+  //size(800, 600);
+
+  source = loadImage("Placido05.jpg");
+  source.loadPixels();
+
+  cells = new int[width/cellSize][height/cellSize];
+  cellsBuffer = new int[width/cellSize][height/cellSize];
+  cellsGen = new int[width/cellSize][height/cellSize];
+  cellsCol = new int[width/cellSize][height/cellSize];
+  stroke(20);
+  float threshold = 20;
+  for (int x=0; x<width/cellSize; x++) {
+    for (int y=0; y<height/cellSize; y++) {
+
+      int iniX = x*cellSize;
+      int iniY = y*cellSize;
+      int photoX = round(map(iniX, 0, width, 0, source.width));
+      int photoY = round(map(iniY, 0, height, 0, source.height));
+      int index = photoX + photoY*source.width;
+      if (brightness(source.pixels[index]) > threshold) {
+        float state = random (2); 
+        ellipse(x*cellSize, y*cellSize, 10, 10);
+        cells[x][y] = int(state);
+        cellsGen[x][y] = int(0);
+        cellsCol[x][y] = source.pixels[index];
+      }
+    }
+  }
+
+  background(0, 0, 0);
+}
+
+
+void draw() {
+  fill(0, 0, 0);
+  rect(0, 0, width, height);
+  //color alive = color(0, 255, 255);
+  //color dead = color(0);
+
+  for (int x=0; x<width/cellSize; x++) {
+    for (int y=0; y<height/cellSize; y++) {
+      if (cellsGen[x][y]!=0) {
+
+        cellsGen[x][y]-=30;
+      }
+    }
+  }
+
+  for (int x=0; x<width/cellSize; x++) {
+    for (int y=0; y<height/cellSize; y++) {
+      if (cellsGen[x][y]>0) {
+        int tempGen = cellsGen[x][y];
+        int tempCol = cellsCol[x][y];
+        if (cells[x][y] == 1) {
+          fill(color(red(tempCol), green(tempCol), blue(tempCol), tempGen));
+        } else {
+          fill(color(red(tempCol), green(tempCol), blue(tempCol), tempGen));
+        }
+        noStroke();
+        float circleSize = map(tempGen, 0, 270, 0, cellSize);
+        ellipse(x*cellSize, y*cellSize, circleSize, circleSize); 
+        if (tempGen>150) {
+          fill(color(red(tempCol), green(tempCol), blue(tempCol), tempGen));
+          ellipse(x*cellSize, y*cellSize, circleSize*0.75, circleSize*0.75);
+        }
+      } else {
+        // fill(dead);
+      }
+      //ellipse(x*cellSize, y*cellSize, cellSize, cellSize); 
+      //rect (x*cellSize, y*cellSize, cellSize, cellSize);
+    }
+  }
+
+  if (frameCount %1 == 0) {
+    //if (millis()-lastRecordedTime>interval) {
+    // if (!pause) {
+
+    iteration();
+    //lastRecordedTime = millis();
+    // }
+    // }
+  }
+  //saveFrame("frames/####.png");
+}
+void iteration() { 
+  for (int x=0; x<width/cellSize; x++) {
+    for (int y=0; y<height/cellSize; y++) {
+      cellsBuffer[x][y] = cells[x][y];
+    }
+  }
+
+  // Visit each cell:
+  for (int x=0; x<width/cellSize; x++) {
+    for (int y=0; y<height/cellSize; y++) {
+      // And visit all the neighbours of each cell
+      int neighbours = 0; // We'll count the neighbours
+      for (int xx=x-1; xx<=x+1; xx++) {
+        for (int yy=y-1; yy<=y+1; yy++) {  
+          if (((xx>=0)&&(xx<width/cellSize))&&((yy>=0)&&(yy<height/cellSize))) { 
+            if (!((xx==x)&&(yy==y))) { 
+              if (cellsBuffer[xx][yy]==1) {
+                neighbours ++; 
+              }
+            } 
+          } 
+        } 
+      } 
+      
+      if (cellsBuffer[x][y]==1) {
+        if (neighbours < 2 || neighbours > 3) {
+          cells[x][y] = 0; 
+        }
+      } else { // The cell is dead: make it live if necessary      
+        if ( neighbours == 3 ) {
+          cells[x][y] = 1; 
+          cellsGen[x][y] = 270;
+        }
+      } 
+    } 
+  } 
+} 
